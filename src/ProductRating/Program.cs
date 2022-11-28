@@ -1,24 +1,54 @@
-var builder = WebApplication.CreateBuilder(args);
+using System;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using ProductRating;
+using Serilog;
 
-// Add services to the container.
+namespace WebApi;
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+public class Program
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    public static int Main(string[] args)
+    {
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.Console()
+            .CreateLogger();
+
+        IDisposable? metricsCollector = null;
+        try
+        {
+            Log.Logger.Debug("init main");
+            CreateHostBuilder(args).Build().Run();
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.Fatal(ex, "Stopped program because of exception");
+            return 1;
+        }
+        finally
+        {
+            // Ensure to flush
+            Log.CloseAndFlush();
+            metricsCollector?.Dispose();
+        }
+    }
+
+    public static IHostBuilder CreateHostBuilder(string[] args)
+    {
+        return Host.CreateDefaultBuilder(args)
+            .ConfigureWebHostDefaults(webBuilder =>
+            {
+                webBuilder.UseStartup<Startup>()
+                    .UseKestrel(o => { o.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(10); });
+            })
+            .ConfigureLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.AddSerilog();
+            });
+    }
 }
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
