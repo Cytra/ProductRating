@@ -4,16 +4,10 @@ using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2.Model;
 using Application.Entities;
+using Application.Ports;
 
 namespace Infrastructure.Database;
 
-public interface IProductRepository
-{
-    Task<bool> Insert(Product product);
-    Task<Product?> Get(Guid id);
-    Task<bool> Update(Product product);
-    Task<bool> Delete(Guid id);
-}
 public class ProductRepository : IProductRepository
 {
     private readonly IAmazonDynamoDB _dynamoDb;

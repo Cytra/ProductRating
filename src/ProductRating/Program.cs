@@ -1,5 +1,8 @@
 using Amazon.DynamoDBv2;
+using Application.Ports;
+using Application.Services;
 using Infrastructure.Database;
+using Infrastructure.Scrapers;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -14,6 +17,11 @@ try
     builder.Host.UseSerilog();
 
     // Add services to the container.
+
+    builder.Services.AddHttpClient<IAmazonHttpClient, AmazonHttpClient>();
+
+    builder.Services.AddScoped<IAmazonScrapper, AmazonScrapper>();
+
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
