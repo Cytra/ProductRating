@@ -1,54 +1,70 @@
-using System;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using ProductRating;
+using Amazon.DynamoDBv2;
+using Infrastructure.Database;
 using Serilog;
 
-namespace WebApi;
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateLogger();
 
-public class Program
+try
 {
-    public static int Main(string[] args)
-    {
-        Log.Logger = new LoggerConfiguration()
-            .WriteTo.Console()
-            .CreateLogger();
+    Log.Logger.Debug("init main");
 
-        IDisposable? metricsCollector = null;
-        try
+    var builder = WebApplication.CreateBuilder(args);
+    builder.Host.UseSerilog();
+
+    // Add services to the container.
+    builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+    builder.Services.AddHealthChecks();
+    builder.Services.AddScoped<IProductRepository, ProductRepository>();
+    builder.Services.AddSingleton<IAmazonDynamoDB>(_ =>
+    {
+        var clientConfig = new AmazonDynamoDBConfig
         {
-            Log.Logger.Debug("init main");
-            CreateHostBuilder(args).Build().Run();
-            return 0;
-        }
-        catch (Exception ex)
+            ServiceURL = builder.Configuration.GetValue<string>("Dynamodb-endpoint-url")
+        };
+        return new AmazonDynamoDBClient(clientConfig);
+    });
+
+    var app = builder.Build();
+
+
+    var env = app.Environment;
+    if (env.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI(c =>
         {
-            Log.Logger.Fatal(ex, "Stopped program because of exception");
-            return 1;
-        }
-        finally
-        {
-            // Ensure to flush
-            Log.CloseAndFlush();
-            metricsCollector?.Dispose();
-        }
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebApi v1"));
+        });
     }
 
-    public static IHostBuilder CreateHostBuilder(string[] args)
+    app.UseDeveloperExceptionPage();
+    //app.UseMiddleware<ExceptionMiddleware>();
+
+    app.UseRouting();
+
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.UseEndpoints(endpoints =>
     {
-        return Host.CreateDefaultBuilder(args)
-            .ConfigureWebHostDefaults(webBuilder =>
-            {
-                webBuilder.UseStartup<Startup>()
-                    .UseKestrel(o => { o.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(10); });
-            })
-            .ConfigureLogging(logging =>
-            {
-                logging.ClearProviders();
-                logging.AddSerilog();
-            });
-    }
+        endpoints.MapControllers();
+        endpoints.MapHealthChecks("/healthz");
+    });
+
+    app.Run();
+
+    return 0;
+}
+catch (Exception ex)
+{
+    Log.Logger.Fatal(ex, "Stopped program because of exception");
+    return 1;
+}
+finally
+{
+    Log.CloseAndFlush();
 }
