@@ -1,12 +1,13 @@
 using Application.Entities;
 using Application.Ports;
+using Application.Services;
 using Infrastructure.Database;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ProductRating.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class WeatherForecastController : ControllerBase
 {
     private static readonly string[] Summaries =
@@ -16,18 +17,27 @@ public class WeatherForecastController : ControllerBase
 
     private readonly ILogger<WeatherForecastController> _logger;
     private readonly IProductRepository _repo;
+    private readonly IAmazonScrapper _amazonScrapper;
 
     public WeatherForecastController(
         ILogger<WeatherForecastController> logger, 
-        IProductRepository repo)
+        IProductRepository repo, 
+        IAmazonScrapper amazonScrapper)
     {
         _logger = logger;
         _repo = repo;
+        _amazonScrapper = amazonScrapper;
     }
 
-    [HttpGet(Name = "GetWeatherForecast")]
+    [HttpGet("GetWeatherForecast")]
     public async Task Get()
     {
         await _repo.Insert(new Product(){ Id = Guid.NewGuid().ToString()});
+    }
+
+    [HttpGet("test")]
+    public async Task Test()
+    {
+        await _amazonScrapper.GetHotDeals();
     }
 }

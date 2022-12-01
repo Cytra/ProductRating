@@ -24,4 +24,11 @@ aws dynamodb list-tables --endpoint-url http://localhost:8000
 # Create table Local Db
 aws dynamodb create-table --table-name products --attribute-definitions AttributeName=sk,AttributeType=S --key-schema AttributeName=sk,KeyType=HASH --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 --endpoint-url http://localhost:8000
 
+# Start Selenium
+
+docker run -d -p 4444:4444 -p 7900:7900 --shm-size="2g" selenium/standalone-chrome:latest
+
+you can see what docker is doing on http://localhost:7900 password => secret
+
+
 

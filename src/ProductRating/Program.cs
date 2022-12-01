@@ -1,8 +1,11 @@
 using Amazon.DynamoDBv2;
+using Application.Options;
 using Application.Ports;
 using Application.Services;
 using Infrastructure.Database;
 using Infrastructure.Scrapers;
+using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Remote;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -18,9 +21,18 @@ try
 
     // Add services to the container.
 
-    builder.Services.AddHttpClient<IAmazonHttpClient, AmazonHttpClient>();
+    builder.Services.Configure<AppOptions>(builder.Configuration);
+
+    builder.Services.AddScoped<IAmazonHttpClient, AmazonHttpClient>();
 
     builder.Services.AddScoped<IAmazonScrapper, AmazonScrapper>();
+
+    builder.Services.AddScoped(x =>
+    {
+        var seleniumUrl = builder.Configuration.GetValue<string>("SeleniumUrl");
+        var chromeOptions = new ChromeOptions();
+        return new RemoteWebDriver(new Uri(seleniumUrl), chromeOptions);
+    });
 
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
@@ -37,7 +49,6 @@ try
     });
 
     var app = builder.Build();
-
 
     var env = app.Environment;
     if (env.IsDevelopment())
