@@ -4,8 +4,6 @@ using Application.Ports;
 using Application.Services;
 using Infrastructure.Database;
 using Infrastructure.Scrapers;
-using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.Remote;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -23,18 +21,14 @@ try
 
     builder.Services.Configure<AppOptions>(builder.Configuration);
 
-    builder.Services.AddScoped<IAmazonHttpClient, AmazonHttpClient>();
+    
 
     builder.Services.AddScoped<IAmazonScrapper, AmazonScrapper>();
 
     builder.Services.AddScoped<ISeleniumDriverFactory, SeleniumDriverFactory>();
 
-    //builder.Services.AddTransient(x =>
-    //{
-    //    var seleniumUrl = builder.Configuration.GetValue<string>("SeleniumUrl");
-    //    var chromeOptions = new ChromeOptions();
-    //    return new RemoteWebDriver(new Uri(seleniumUrl), chromeOptions);
-    //});
+    builder.Services.AddScoped<IAmazonHttpClient, SeleniumClient>();
+    //builder.Services.AddHttpClient<IAmazonHttpClient, AmazonHttpClient>();
 
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();

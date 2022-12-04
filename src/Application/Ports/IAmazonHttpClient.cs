@@ -2,6 +2,6 @@
 
 public interface IAmazonHttpClient
 {
-    string SearchProducts(string searchTerm);
-    string GetHtmlFromUrl(string urlEnd);
+    Task<string> SearchProducts(string searchTerm);
+    Task<string> GetHtmlFromUrl(string urlEnd);
 }

@@ -27,9 +27,9 @@ public class WeatherForecastController : ControllerBase
     }
 
     [HttpGet("test")]
-    public IActionResult Test()
+    public async Task<IActionResult> Test()
     {
-        _amazonScrapper.GetProductsBySearchTerm("dell laptop");
+        await _amazonScrapper.GetProductsBySearchTerm("dell laptop");
         return Ok();
     }
 }

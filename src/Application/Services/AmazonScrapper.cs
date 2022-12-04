@@ -9,7 +9,7 @@ namespace Application.Services;
 
 public interface IAmazonScrapper
 {
-    void GetProductsBySearchTerm(string searchTerm);
+    Task GetProductsBySearchTerm(string searchTerm);
 }
 
 public class AmazonScrapper : IAmazonScrapper
@@ -21,9 +21,9 @@ public class AmazonScrapper : IAmazonScrapper
         _amazonHttpClient = amazonHttpClient;
     }
 
-    public void GetProductsBySearchTerm(string searchTerm)
+    public async Task GetProductsBySearchTerm(string searchTerm)
     {
-        var oneDeal = _amazonHttpClient.SearchProducts(searchTerm);
+        var oneDeal = await _amazonHttpClient.SearchProducts(searchTerm);
 
         var htmlDoc = new HtmlDocument();
         htmlDoc.LoadHtml(oneDeal);
