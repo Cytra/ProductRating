@@ -27,19 +27,21 @@ try
 
     builder.Services.AddScoped<IAmazonScrapper, AmazonScrapper>();
 
-    builder.Services.AddScoped(x =>
-    {
-        var seleniumUrl = builder.Configuration.GetValue<string>("SeleniumUrl");
-        var chromeOptions = new ChromeOptions();
-        return new RemoteWebDriver(new Uri(seleniumUrl), chromeOptions);
-    });
+    builder.Services.AddScoped<ISeleniumDriverFactory, SeleniumDriverFactory>();
+
+    //builder.Services.AddTransient(x =>
+    //{
+    //    var seleniumUrl = builder.Configuration.GetValue<string>("SeleniumUrl");
+    //    var chromeOptions = new ChromeOptions();
+    //    return new RemoteWebDriver(new Uri(seleniumUrl), chromeOptions);
+    //});
 
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
     builder.Services.AddHealthChecks();
     builder.Services.AddScoped<IProductRepository, ProductRepository>();
-    builder.Services.AddSingleton<IAmazonDynamoDB>(_ =>
+    builder.Services.AddTransient<IAmazonDynamoDB>(_ =>
     {
         var clientConfig = new AmazonDynamoDBConfig
         {

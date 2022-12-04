@@ -2,7 +2,6 @@
 
 public interface IAmazonHttpClient
 {
-    Task<string> GetHotDeals();
-
-    Task<string> GetOneDeal();
+    string SearchProducts(string searchTerm);
+    string GetHtmlFromUrl(string urlEnd);
 }

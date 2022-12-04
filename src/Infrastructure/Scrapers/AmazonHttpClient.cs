@@ -1,54 +1,38 @@
-﻿using Application.Options;
-using Application.Ports;
-using Microsoft.Extensions.Options;
-using OpenQA.Selenium.Chrome;
+﻿using Application.Ports;
 using OpenQA.Selenium.Remote;
-
 
 namespace Infrastructure.Scrapers;
 
 public class AmazonHttpClient : IAmazonHttpClient
 {
-    //https://www.amazon.com/gp/goldbox?ref_=nav_cs_gb
-
-    private readonly AppOptions _appOptions;
-    private readonly RemoteWebDriver _remoteWebDriver;
-    public AmazonHttpClient(IOptions<AppOptions> appOptions, RemoteWebDriver remoteWebDriver)
+    private const string AmazonUrl = "https://www.amazon.com";
+    private readonly ISeleniumDriverFactory _driverFactory;
+    private RemoteWebDriver _driver;
+    public AmazonHttpClient(ISeleniumDriverFactory driverFactory)
     {
-        _remoteWebDriver = remoteWebDriver;
-        _appOptions = appOptions.Value;
+        _driverFactory = driverFactory;
     }
 
-    public async Task<string> GetHotDeals()
+    public string SearchProducts(string searchTerm)
     {
-        //var response = await _client.GetAsync("/gp/goldbox?ref_=nav_cs_gb");
-        //response.EnsureSuccessStatusCode();
+        var formSearchTerm = searchTerm.Replace(' ', '+');
+        var url = $"{AmazonUrl}/s?k={formSearchTerm}";
 
-        //var result = await response.Content.ReadAsStringAsync();
-        //return result;
-        return "";
+        _driver = _driverFactory.GetDriver();
+        _driver.Navigate().GoToUrl(url);
+        var result = _driver.PageSource;
+        //_driver.Dispose();
+        return result;
     }
 
-    public async Task<string> GetOneDeal()
+    public string GetHtmlFromUrl(string urlEnd)
     {
+        var url = $"{AmazonUrl}{urlEnd}";
 
-        //using var driver = GetChromeDriver();
-
-        var url = $"https://www.amazon.com/s?k=mac&crid=2H5OIWBTQ2Q6Q&sprefix=ma%2Caps%2C161&ref=nb_sb_noss_2";
-
-        _remoteWebDriver.Navigate().GoToUrl(url);
-        return _remoteWebDriver.PageSource;
-        ////https://www.amazon.com/dp/B097VJS3Y3?ref_=Oct_DLandingS_D_dee22a8f_NA&th=1
-        //var response = await _client.GetAsync("/dp/B097VJS3Y3?ref_=Oct_DLandingS_D_dee22a8f_NA&th=1");
-        //response.EnsureSuccessStatusCode();
-
-        //var result = await response.Content.ReadAsStringAsync();
-        //return result;
+        //var driver = _driverFactory.GetDriver();
+        _driver.Navigate().GoToUrl(url);
+        var result = _driver.PageSource;
+        //driver.Dispose();
+        return result;
     }
-
-    //private RemoteWebDriver GetChromeDriver()
-    //{
-    //    var chromeOptions = new ChromeOptions();
-    //    return new RemoteWebDriver(new Uri(_appOptions.SeleniumUrl), chromeOptions);
-    //}
 }
