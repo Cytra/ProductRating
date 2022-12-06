@@ -1,15 +1,13 @@
-﻿using System.ComponentModel.Design;
-using System.Xml.Linq;
-using Application.Options;
-using Application.Ports;
+﻿using Application.Ports;
 using HtmlAgilityPack;
-using Microsoft.Extensions.Options;
 
 namespace Application.Services;
 
 public interface IAmazonScrapper
 {
     Task GetProductsBySearchTerm(string searchTerm);
+
+    Task GetProductByAsin(string asin);
 }
 
 public class AmazonScrapper : IAmazonScrapper
@@ -94,7 +92,11 @@ public class AmazonScrapper : IAmazonScrapper
         //test5
         //    .Select(x=> x.Attributes.Where(y => y.Name == "href"));
 
-        var test7 = _amazonHttpClient.GetHtmlFromUrl(test6.First());
 
+    }
+
+    public async Task GetProductByAsin(string asin)
+    {
+        var productHtml = await _amazonHttpClient.GetProductByAsin(asin);
     }
 }

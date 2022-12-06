@@ -5,6 +5,7 @@ using Application.Services;
 using Infrastructure.Database;
 using Infrastructure.Scrapers;
 using Serilog;
+using System.Net;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -27,8 +28,11 @@ try
 
     builder.Services.AddScoped<ISeleniumDriverFactory, SeleniumDriverFactory>();
 
-    builder.Services.AddScoped<IAmazonHttpClient, SeleniumClient>();
-    //builder.Services.AddHttpClient<IAmazonHttpClient, AmazonHttpClient>();
+    builder.Services.AddHttpClient<IAmazonHttpClient, AmazonHttpClient>()
+        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+    {
+        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+    });
 
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();

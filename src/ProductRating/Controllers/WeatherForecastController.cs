@@ -32,4 +32,11 @@ public class WeatherForecastController : ControllerBase
         await _amazonScrapper.GetProductsBySearchTerm("dell laptop");
         return Ok();
     }
+
+    [HttpGet("asin")]
+    public async Task<IActionResult> Asin()
+    {
+        await _amazonScrapper.GetProductByAsin("B08S71Y7M7");
+        return Ok();
+    }
 }
