@@ -1,11 +1,13 @@
-﻿using Application.Ports;
+﻿using System.Runtime.CompilerServices;
+using Application.Models;
+using Application.Ports;
 using HtmlAgilityPack;
 
 namespace Application.Services;
 
 public interface IAmazonScrapper
 {
-    Task GetProductsBySearchTerm(string searchTerm);
+    Task<List<ProductRating>> GetProductsBySearchTerm(string searchTerm);
 
     Task GetProductByAsin(string asin);
 }
@@ -19,55 +21,49 @@ public class AmazonScrapper : IAmazonScrapper
         _amazonHttpClient = amazonHttpClient;
     }
 
-    public async Task GetProductsBySearchTerm(string searchTerm)
+    public async Task<List<ProductRating>> GetProductsBySearchTerm(string searchTerm)
     {
+        var result = new List<ProductRating>();
         var oneDeal = await _amazonHttpClient.SearchProducts(searchTerm);
 
         var htmlDoc = new HtmlDocument();
         htmlDoc.LoadHtml(oneDeal);
 
+        var searchResultTable = htmlDoc
+            .DocumentNode
+            .Descendants("div")
+            .Single(node => node.GetAttributeValue("class", "")
+                .Contains("s-main-slot s-result-list s-search-results sg-row"));
 
-        //var allProductsTable = htmlDoc
-        //    .DocumentNode
-        //    .Descendants("div")
-        //    .SingleOrDefault(node => node.GetAttributeValue("class", "")
-        //        .Contains("s-main-slot s-result-list s-search-results sg-row"));
+        var searchResult = searchResultTable.ChildNodes
+            .Where(x => x.Attributes.Any(y
+                => y.Name == "data-component-type" && y.Value == "s-search-result"))
+            .ToList();
 
-        //var allProducts = htmlDoc
-        //    .DocumentNode
-        //    .Descendants("div")
-        //    .Where(node => node.GetAttributeValue("data-component-type", "")
-        //        .Contains("s-search-result")).ToList();
+        var oneProd = searchResult[0];
 
-        //// a class a-link-normal s-no-outline
+        var asin = oneProd.Attributes
+            .Single(x => x.Name == "data-asin")
+            .Value;
+        var description = oneProd
+            .Descendants("span")
+            .Single(y => y.Attributes
+                .Any( c => c.Name == "class" 
+                           && c.Value == "a-size-medium a-color-base a-text-normal"))
+            .InnerText;
 
-        //var test = allProducts[0]
-        //    .ChildNodes
-        //    .Where(x => x.Name == "a" 
-        //                //&& x.GetAttributeValue("class", "")
-        //                //    .Contains("a-link-normal s-no-outline")
-        //                );
-
-
-
-        //var test2 = htmlDoc
-        //    .DocumentNode
-        //    .Descendants("div")
-        //    .Where(node => node.GetAttributeValue("class", "")
-        //        .Contains("a-section aok-relative s-image-fixed-height"))
-        //    .ToList();
-
-        //var test4 = test2
-        //    .Select(x=> x.ChildNodes.First())
-        //    .ToList();
-
-        //s-product-image-container aok-relative s-image-overlay-grey s-text-center s-padding-left-small s-padding-right-small s-flex-expand-height
+        var priceText = oneProd
+            .Descendants("span")
+            .Single(y => y.Attributes
+                .Any(c => c.Name == "class"
+                          && c.Value == "a-offscreen"))
+            .InnerText;
 
         var test2 = htmlDoc
             .DocumentNode
             .Descendants("div")
             .Where(node => node.GetAttributeValue("class", "")
-                .Contains("s-product-image-container aok-relative s-image-overlay-grey s-text-center s-padding-left-small s-padding-right-small s-flex-expand-height"))
+                .Contains("a-section a-spacing-small a-spacing-top-small"))
             .ToList();
 
         var test3 = test2
@@ -92,7 +88,7 @@ public class AmazonScrapper : IAmazonScrapper
         //test5
         //    .Select(x=> x.Attributes.Where(y => y.Name == "href"));
 
-
+        return new List<ProductRating>();
     }
 
     public async Task GetProductByAsin(string asin)

@@ -6,6 +6,10 @@ using Infrastructure.Database;
 using Infrastructure.Scrapers;
 using Serilog;
 using System.Net;
+using Application.Models.Enums;
+using Microsoft.AspNetCore.Mvc;
+using ProductRating.Middleware;
+using ProductRating.Models;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -22,8 +26,6 @@ try
 
     builder.Services.Configure<AppOptions>(builder.Configuration);
 
-    
-
     builder.Services.AddScoped<IAmazonScrapper, AmazonScrapper>();
 
     builder.Services.AddScoped<ISeleniumDriverFactory, SeleniumDriverFactory>();
@@ -34,7 +36,23 @@ try
         AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
     });
 
-    builder.Services.AddControllers();
+    builder.Services.AddControllers()
+        .ConfigureApiBehaviorOptions(setupAction =>
+        {
+            setupAction.InvalidModelStateResponseFactory = context =>
+            {
+                var apiResponse = new ErrorResponse();
+                foreach (var modelState in context.ModelState)
+                {
+                    foreach (var error in modelState.Value.Errors)
+                    {
+                        apiResponse.Errors.Add(new Error() { ErrorCode = (int)ErrorCodes.BadRequest, ErrorMessage = error.ErrorMessage });
+                    }
+                }
+                return new BadRequestObjectResult(apiResponse);
+            };
+        });
+
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
     builder.Services.AddHealthChecks();
@@ -61,7 +79,7 @@ try
     }
 
     app.UseDeveloperExceptionPage();
-    //app.UseMiddleware<ExceptionMiddleware>();
+    app.UseMiddleware<ExceptionMiddleware>();
 
     app.UseRouting();
 
