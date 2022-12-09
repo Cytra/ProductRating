@@ -59,6 +59,8 @@ public class AmazonScrapper : IAmazonScrapper
                           && c.Value == "a-offscreen"))
             .InnerText;
 
+
+
         var test2 = htmlDoc
             .DocumentNode
             .Descendants("div")
