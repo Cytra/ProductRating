@@ -2,6 +2,7 @@
 using Application.Models;
 using Application.Ports;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Services;
 
@@ -15,10 +16,13 @@ public interface IAmazonScrapper
 public class AmazonScrapper : IAmazonScrapper
 {
     private readonly IAmazonHttpClient _amazonHttpClient;
+    private readonly ILogger<AmazonScrapper> _logger;
     public AmazonScrapper(
-        IAmazonHttpClient amazonHttpClient)
+        IAmazonHttpClient amazonHttpClient, 
+        ILogger<AmazonScrapper> logger)
     {
         _amazonHttpClient = amazonHttpClient;
+        _logger = logger;
     }
 
     public async Task<List<ProductRating>> GetProductsBySearchTerm(string searchTerm)
@@ -40,57 +44,72 @@ public class AmazonScrapper : IAmazonScrapper
                 => y.Name == "data-component-type" && y.Value == "s-search-result"))
             .ToList();
 
-        var oneProd = searchResult[0];
+        foreach (var node in searchResult)
+        {
+            result.Add(ParseProduct(node));
+        }
 
+        return result;
+    }
+
+    private ProductRating ParseProduct(HtmlNode oneProd)
+    {
+        
         var asin = oneProd.Attributes
             .Single(x => x.Name == "data-asin")
             .Value;
+
+        _logger.LogInformation("asin {asin}", asin);
+
         var description = oneProd
             .Descendants("span")
             .Single(y => y.Attributes
-                .Any( c => c.Name == "class" 
-                           && c.Value == "a-size-medium a-color-base a-text-normal"))
+                .Any(c => c.Name == "class"
+                          && c.Value == "a-size-medium a-color-base a-text-normal"))
             .InnerText;
 
         var priceText = oneProd
             .Descendants("span")
-            .Single(y => y.Attributes
+            .SingleOrDefault(y => y.Attributes
                 .Any(c => c.Name == "class"
-                          && c.Value == "a-offscreen"))
-            .InnerText;
+                          && c.Value == "a-price"))
+            ?.FirstChild?.InnerText;
 
-
-
-        var test2 = htmlDoc
-            .DocumentNode
+        var ratingString = oneProd
             .Descendants("div")
-            .Where(node => node.GetAttributeValue("class", "")
-                .Contains("a-section a-spacing-small a-spacing-top-small"))
-            .ToList();
+            .SingleOrDefault(y => y.Attributes
+                .Any(c => c.Name == "class"
+                          && c.Value == "a-row a-size-small"))
+            ?.FirstChild?.InnerText;
 
-        var test3 = test2
-            .Select(x => x.ChildNodes.First())
-            .ToList();
+        var canParseRating = float.TryParse(ratingString?[..3], out var rating);
 
-        var test4 = test3
-            .Select(x => x.ChildNodes.First())
-            .ToList();
+        var numOfReviewsString = oneProd
+            .Descendants("span")
+            .SingleOrDefault(y => y.Attributes
+                .Any(c => c.Name == "class"
+                          && c.Value == "a-size-base s-underline-text"))
+            ?.InnerText;
 
-        var test5 = test4
-            .Select(x => x.ChildNodes.First())
-            //.Select(y=> y.Attributes.Where(a => a.Name == "href"))
-            .ToList();
+        numOfReviewsString = numOfReviewsString?.Trim(' ', '(', ')');
 
-        var test6 = test5
-            .Select(x=> x.ChildAttributes("href").First().Value)
-            .ToList();
+        var carParseNumOfReviews = int.TryParse(
+            numOfReviewsString, out int numOfReviews);
 
+        var sponsoredSpan = oneProd
+            .Descendants("span")
+            .SingleOrDefault(y => y.Attributes
+                .Any(c => c.Name == "class"
+                          && c.Value == "a-color-secondary"));
+        var sponsored = sponsoredSpan != null;
 
-
-        //test5
-        //    .Select(x=> x.Attributes.Where(y => y.Name == "href"));
-
-        return new List<ProductRating>();
+        return new ProductRating(
+            description, 
+            asin, 
+            priceText,
+            canParseRating ? rating : null,
+            carParseNumOfReviews ? numOfReviews : null, 
+            sponsored);
     }
 
     public async Task GetProductByAsin(string asin)
