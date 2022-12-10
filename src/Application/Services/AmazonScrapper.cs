@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using Application.Models;
+﻿using Application.Models;
 using Application.Ports;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
@@ -8,7 +7,7 @@ namespace Application.Services;
 
 public interface IAmazonScrapper
 {
-    Task<List<ProductRating>> GetProductsBySearchTerm(string searchTerm);
+    Task<PagedList<ProductRating>> GetProductsBySearchTerm(string searchTerm, int? page);
 
     Task GetProductByAsin(string asin);
 }
@@ -25,10 +24,11 @@ public class AmazonScrapper : IAmazonScrapper
         _logger = logger;
     }
 
-    public async Task<List<ProductRating>> GetProductsBySearchTerm(string searchTerm)
+    public async Task<PagedList<ProductRating>> GetProductsBySearchTerm(string searchTerm, int? page)
     {
         var result = new List<ProductRating>();
-        var oneDeal = await _amazonHttpClient.SearchProducts(searchTerm);
+        var realPage = page ?? 1;
+        var oneDeal = await _amazonHttpClient.SearchProducts(searchTerm, realPage);
 
         var htmlDoc = new HtmlDocument();
         htmlDoc.LoadHtml(oneDeal);
@@ -49,7 +49,33 @@ public class AmazonScrapper : IAmazonScrapper
             result.Add(ParseProduct(node));
         }
 
-        return result;
+        var paging = GetPaging(htmlDoc, realPage, result.Count);
+
+        return new PagedList<ProductRating>()
+        {
+            Items = result,
+            Paging = paging
+        };
+    }
+
+    private PagingModel GetPaging(HtmlDocument document, int page, int size)
+    {
+        var lastPageString = document
+            .DocumentNode
+            .Descendants("span")
+            .Single(y => y.Attributes
+                .Any(c => c.Name == "class"
+                          && c.Value == "s-pagination-item s-pagination-disabled"))
+            .InnerText;
+
+        var canParseLastPageString = int.TryParse(lastPageString, out var lastPage);
+
+        return new PagingModel()
+        {
+            Page = page,
+            PageSize = size,
+            TotalPages = lastPage
+        };
     }
 
     private ProductRating ParseProduct(HtmlNode oneProd)

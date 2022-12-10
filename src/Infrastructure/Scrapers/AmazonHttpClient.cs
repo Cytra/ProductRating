@@ -13,9 +13,9 @@ public class AmazonHttpClient : IAmazonHttpClient
         _httpClient = httpClient;
     }
 
-    public async Task<string> SearchProducts(string searchTerm)
+    public async Task<string> SearchProducts(string searchTerm, int page)
     {
-        var url = $"https://www.amazon.com/s?k={HttpUtility.UrlEncode(searchTerm)}";
+        var url = $"https://www.amazon.com/s?k={HttpUtility.UrlEncode(searchTerm)}&page={page}";
         return await MakeRequest(url);
     }
 

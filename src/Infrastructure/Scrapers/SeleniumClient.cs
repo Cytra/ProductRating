@@ -15,10 +15,10 @@ public class SeleniumClient : IAmazonHttpClient
         _driverFactory = driverFactory;
     }
 
-    public Task<string> SearchProducts(string searchTerm)
+    public Task<string> SearchProducts(string searchTerm, int page)
     {
         var formSearchTerm = HttpUtility.UrlEncode(searchTerm);
-        var url = $"{AmazonUrl}/s?k={formSearchTerm}";
+        var url = $"{AmazonUrl}/s?k={formSearchTerm}&page={page}";
         _driver = _driverFactory.GetDriver();
         _driver.Navigate().GoToUrl(url);
         var result = _driver.PageSource;
