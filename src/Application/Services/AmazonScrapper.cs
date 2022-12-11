@@ -9,7 +9,7 @@ public interface IAmazonScrapper
 {
     Task<PagedList<ProductRating>> GetProductsBySearchTerm(string searchTerm, int? page);
 
-    Task GetProductByAsin(string asin);
+    Task<Dictionary<string, ProductByAsin>> GetProductByAsin(string[] asins);
 }
 
 public class AmazonScrapper : IAmazonScrapper
@@ -138,8 +138,91 @@ public class AmazonScrapper : IAmazonScrapper
             sponsored);
     }
 
-    public async Task GetProductByAsin(string asin)
+    public async Task<Dictionary<string, ProductByAsin>> GetProductByAsin(string[] asins)
     {
-        var productHtml = await _amazonHttpClient.GetProductByAsin(asin);
+        var result = new Dictionary<string, ProductByAsin>();
+        foreach (var asin in asins)
+        {
+            var productHtml = await _amazonHttpClient.GetProductByAsin(asin);
+            var product = ParseProductByAsin(productHtml);
+            result.Add(asin, product);
+        }
+        return result;
+    }
+
+    private ProductByAsin ParseProductByAsin(string input)
+    {
+        var htmlDoc = new HtmlDocument();
+        htmlDoc.LoadHtml(input);
+
+        string? image = null;
+        string? title = null;
+        string? price = null;
+        string? rating = null;
+        var reviews = 0;
+
+        var imageNodeDiv = htmlDoc
+            .DocumentNode
+            .Descendants("div")
+            .FirstOrDefault(node => node.GetAttributeValue("id", "")
+                .Contains("imgTagWrapperId"));
+
+        var imageNodeImg = imageNodeDiv?
+            .Descendants("img")
+            .FirstOrDefault();
+
+        image = imageNodeImg?.Attributes
+                .FirstOrDefault(x => x.Name == "src")?.Value;
+
+        var titleNode = htmlDoc
+            .DocumentNode
+            .Descendants("span")
+            .FirstOrDefault(node => node.GetAttributeValue("id", "")
+                .Contains("productTitle"));
+
+        title = titleNode?.InnerText.Trim();
+
+        var priceNode = htmlDoc
+            .DocumentNode
+            .Descendants("span")
+            .SingleOrDefault(node => node.GetAttributeValue("class", "")
+                .Contains("a-price aok-align-center reinventPricePriceToPayMargin priceToPay"));
+
+        if (priceNode != null)
+        {
+            price = priceNode.FirstChild.InnerText;
+        }
+
+        var ratingNode = htmlDoc
+            .DocumentNode
+            .Descendants("span")
+            .SingleOrDefault(node => node.GetAttributeValue("class", "")
+                .Contains("a-size-medium a-color-base"));
+
+        if (ratingNode != null)
+        {
+            rating = ratingNode.FirstChild.InnerText;
+        }
+
+        var reviewsNode = htmlDoc
+            .DocumentNode
+            .Descendants("span")
+            .FirstOrDefault(node => node.GetAttributeValue("id", "")
+                .Contains("acrCustomerReviewText"));
+
+        if (reviewsNode != null)
+        {
+            var reviewsString = reviewsNode.InnerText;
+            var reviewsStringSplit = reviewsString.Split(' ');
+            var varParseReviewsCount = int.TryParse(reviewsStringSplit[0], out reviews);
+
+        }
+
+        return new ProductByAsin(
+            image, 
+            price, 
+            rating, 
+            reviews, 
+            title);
     }
 }
