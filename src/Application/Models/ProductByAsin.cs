@@ -3,7 +3,7 @@
 public record ProductByAsin(
     string? Image,
     string? Price,
-    string? Rating,
+    float? Rating,
     int Reviews,
     string? Title
     );

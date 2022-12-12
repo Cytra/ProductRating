@@ -2,6 +2,6 @@
 
 public enum ErrorCodes : int
 {
-    InternalError,
-    BadRequest,
+    InternalError = 1,
+    BadRequest = 2,
 }

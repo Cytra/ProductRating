@@ -9,7 +9,7 @@ public interface IAmazonScrapper
 {
     Task<PagedList<ProductRating>> GetProductsBySearchTerm(string searchTerm, int? page);
 
-    Task<Dictionary<string, ProductByAsin>> GetProductByAsin(string[] asins);
+    Task<Dictionary<string, ProductByAsin>> GetProductByAsin(string asins);
 }
 
 public class AmazonScrapper : IAmazonScrapper
@@ -80,26 +80,37 @@ public class AmazonScrapper : IAmazonScrapper
 
     private ProductRating ParseProduct(HtmlNode oneProd)
     {
-        
+        string? description = null;
+        string? price = null;
         var asin = oneProd.Attributes
             .Single(x => x.Name == "data-asin")
             .Value;
 
         _logger.LogInformation("asin {asin}", asin);
 
-        var description = oneProd
+        var descriptionNode = oneProd
             .Descendants("span")
-            .Single(y => y.Attributes
+            .FirstOrDefault(y => y.Attributes
                 .Any(c => c.Name == "class"
-                          && c.Value == "a-size-medium a-color-base a-text-normal"))
-            .InnerText;
+                          && c.Value.Contains("a-color-base a-text-normal")));
 
-        var priceText = oneProd
+
+        if (descriptionNode != null)
+        {
+            description = descriptionNode.InnerText;
+        }
+
+
+        var priceNode = oneProd
             .Descendants("span")
-            .SingleOrDefault(y => y.Attributes
+            .FirstOrDefault(y => y.Attributes
                 .Any(c => c.Name == "class"
-                          && c.Value == "a-price"))
-            ?.FirstChild?.InnerText;
+                          && c.Value == "a-price"));
+
+        if (priceNode != null)
+        {
+            price = priceNode.FirstChild?.InnerText;
+        }
 
         var ratingString = oneProd
             .Descendants("div")
@@ -110,17 +121,21 @@ public class AmazonScrapper : IAmazonScrapper
 
         var canParseRating = float.TryParse(ratingString?[..3], out var rating);
 
+
         var numOfReviewsString = oneProd
             .Descendants("span")
-            .SingleOrDefault(y => y.Attributes
-                .Any(c => c.Name == "class"
-                          && c.Value == "a-size-base s-underline-text"))
+            .FirstOrDefault(node => node.GetAttributeValue("class", "")
+                .Contains("a-size-base s-underline-text"))
             ?.InnerText;
 
-        numOfReviewsString = numOfReviewsString?.Trim(' ', '(', ')');
+        numOfReviewsString = numOfReviewsString?
+            .Trim(' ', '(', ')')
+            .Replace(",", "");
 
         var carParseNumOfReviews = int.TryParse(
             numOfReviewsString, out int numOfReviews);
+
+
 
         var sponsoredSpan = oneProd
             .Descendants("span")
@@ -132,16 +147,17 @@ public class AmazonScrapper : IAmazonScrapper
         return new ProductRating(
             description, 
             asin, 
-            priceText,
+            price,
             canParseRating ? rating : null,
             carParseNumOfReviews ? numOfReviews : null, 
             sponsored);
     }
 
-    public async Task<Dictionary<string, ProductByAsin>> GetProductByAsin(string[] asins)
+    public async Task<Dictionary<string, ProductByAsin>> GetProductByAsin(string asins)
     {
+        var asinArray = asins.Split(',');
         var result = new Dictionary<string, ProductByAsin>();
-        foreach (var asin in asins)
+        foreach (var asin in asinArray)
         {
             var productHtml = await _amazonHttpClient.GetProductByAsin(asin);
             var product = ParseProductByAsin(productHtml);
@@ -158,7 +174,7 @@ public class AmazonScrapper : IAmazonScrapper
         string? image = null;
         string? title = null;
         string? price = null;
-        string? rating = null;
+        float? rating = 0;
         var reviews = 0;
 
         var imageNodeDiv = htmlDoc
@@ -188,9 +204,24 @@ public class AmazonScrapper : IAmazonScrapper
             .SingleOrDefault(node => node.GetAttributeValue("class", "")
                 .Contains("a-price aok-align-center reinventPricePriceToPayMargin priceToPay"));
 
+
         if (priceNode != null)
         {
-            price = priceNode.FirstChild.InnerText;
+            price = priceNode.InnerText;
+        }
+        else
+        {
+            var priceLowerRangeNode = htmlDoc
+                .DocumentNode
+                .Descendants("span")
+                .FirstOrDefault(node => node.GetAttributeValue("class", "")
+                    .Contains("a-price a-text-price a-size-medium apexPriceToPay"));
+
+            if (priceLowerRangeNode != null)
+            {
+                price = priceLowerRangeNode.FirstChild.InnerText;
+            }
+
         }
 
         var ratingNode = htmlDoc
@@ -201,7 +232,12 @@ public class AmazonScrapper : IAmazonScrapper
 
         if (ratingNode != null)
         {
-            rating = ratingNode.FirstChild.InnerText;
+            var ratingString = ratingNode.FirstChild.InnerText;
+            var canParseRating = float.TryParse(ratingString?[..3], out var ratingPared);
+            if (canParseRating)
+            {
+                rating = ratingPared;
+            }
         }
 
         var reviewsNode = htmlDoc
@@ -210,17 +246,18 @@ public class AmazonScrapper : IAmazonScrapper
             .FirstOrDefault(node => node.GetAttributeValue("id", "")
                 .Contains("acrCustomerReviewText"));
 
+
         if (reviewsNode != null)
         {
             var reviewsString = reviewsNode.InnerText;
             var reviewsStringSplit = reviewsString.Split(' ');
-            var varParseReviewsCount = int.TryParse(reviewsStringSplit[0], out reviews);
-
+            var reviewsStringTrimmed = reviewsStringSplit[0].Replace(",", "");
+            var varParseReviewsCount = int.TryParse(reviewsStringTrimmed, out reviews);
         }
 
         return new ProductByAsin(
             image, 
-            price, 
+            price,
             rating, 
             reviews, 
             title);

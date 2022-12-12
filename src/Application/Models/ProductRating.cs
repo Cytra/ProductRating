@@ -1,9 +1,9 @@
 ﻿namespace Application.Models;
 
 public record ProductRating(
-    string Description,
+    string? Description,
     string Asin,
-    string Price,
+    string? Price,
     float? Rating,
     int? NumReviews,
     bool Sponsored

@@ -28,8 +28,9 @@ public class ProductController : ControllerBase
         return result;
     }
 
-    [HttpGet]
-    public async Task<Dictionary<string, ProductByAsin>> Asin([Required][FromQuery] string[] asins)
+    [HttpGet("{asins}")]
+    public async Task<Dictionary<string, ProductByAsin>> Asin(
+        [Required] string asins)
     {
         var result = await _amazonScrapper.GetProductByAsin(asins);
         return result;
