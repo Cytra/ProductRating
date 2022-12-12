@@ -53,6 +53,80 @@ public class AmazonScrapperTests
         product.Title.Should().Be(title);
     }
 
+    [Theory]
+    [MemberData(nameof(GetProductSearch))]
+    public async Task GetProductsBySearchTerm(
+        string searchTerm,
+        int page,
+        int pageSize,
+        int totalPages,
+        string asin,
+        string description,
+        int numReviews,
+        string price,
+        float rating,
+        bool sponsored)
+    {
+        var rootFolder = "Data";
+        var subFolder = "ProductSearch";
+        var path = Path.Combine(rootFolder, subFolder, $"{searchTerm}.html");
+        var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        var fullPath = Path.Combine(assemblyPath, path);
+        var rawHtml = File.ReadAllText(fullPath);
+
+        _amazonHttpClientMock.Setup(x => 
+                x.SearchProducts(It.IsAny<string>(), It.IsAny<int>()))
+            .ReturnsAsync(rawHtml);
+
+        var sut = _fixture.Create<AmazonScrapper>();
+
+        var products = await sut.GetProductsBySearchTerm(searchTerm, 1);
+        products.Items.Should().NotBeNull();
+        var firstProduct = products.Items.First();
+        firstProduct.Asin.Should().Be(asin);
+        firstProduct.Description.Should()
+            .Be(description);
+        firstProduct.NumReviews.Should().Be(numReviews);
+        firstProduct.Price.Should().Be(price);
+        firstProduct.Rating.Should().Be(rating);
+        firstProduct.Sponsored.Should().Be(sponsored);
+        products.Should().NotBeNull();
+        products.Paging.Page.Should().Be(page);
+        products.Paging.PageSize.Should().Be(pageSize);
+        products.Paging.TotalPages.Should().Be(totalPages);
+    }
+
+    public static IEnumerable<object[]> GetProductSearch =>
+        new List<object[]>
+        {
+            new object[]
+            {
+                "DellLaptops",
+                1,
+                22,
+                20,
+                "B0BN7HZQ2M",
+                "Dell 2023 Newest Inspiron 3000 15.6&quot; FHD Touchscreen Laptop, Intel i5-1135G7 Up to 4.2GHz, Beat i7-1060G7, 16GB DDR4 RAM, 512GB PCIe SSD, SD Card Reader, Webcam, HDMI, Windows 11 Home, Black",
+                1,
+                "$599.99",
+                1f,
+                true
+            },
+            new object[]
+            {
+                "WomenGifts",
+                1,
+                60,
+                7,
+                "B01DWH11L4",
+                "VIKTOR JURGEN Neck Massage Pillow Shiatsu Deep Kneading Shoulder Back and Foot Massager with Heat-Relaxation Gifts for Women/Men/Dad/Mom",
+                19424,
+                "$49.98",
+                4.4F,
+                true
+            },
+        };
+
     public static IEnumerable<object[]> GetProductByAsinData =>
         new List<object[]>
         {
