@@ -74,7 +74,7 @@ public class AmazonScrapper : IAmazonScrapper
         {
             Page = page,
             PageSize = size,
-            TotalPages = lastPage
+            TotalPages = canParseLastPageString ? lastPage : 1,
         };
     }
 
@@ -94,12 +94,10 @@ public class AmazonScrapper : IAmazonScrapper
                 .Any(c => c.Name == "class"
                           && c.Value.Contains("a-color-base a-text-normal")));
 
-
         if (descriptionNode != null)
         {
             description = descriptionNode.InnerText;
         }
-
 
         var priceNode = oneProd
             .Descendants("span")
@@ -135,13 +133,12 @@ public class AmazonScrapper : IAmazonScrapper
         var carParseNumOfReviews = int.TryParse(
             numOfReviewsString, out int numOfReviews);
 
-
-
         var sponsoredSpan = oneProd
             .Descendants("span")
             .SingleOrDefault(y => y.Attributes
                 .Any(c => c.Name == "class"
                           && c.Value == "a-color-secondary"));
+
         var sponsored = sponsoredSpan != null;
 
         return new ProductRating(
