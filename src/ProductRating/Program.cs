@@ -1,8 +1,6 @@
-using Amazon.DynamoDBv2;
 using Application.Options;
 using Application.Ports;
 using Application.Services;
-using Infrastructure.Database;
 using Infrastructure.Scrapers;
 using Serilog;
 using System.Net;
@@ -27,8 +25,6 @@ try
     builder.Services.Configure<AppOptions>(builder.Configuration);
 
     builder.Services.AddScoped<IAmazonScrapper, AmazonScrapper>();
-
-    builder.Services.AddScoped<ISeleniumDriverFactory, SeleniumDriverFactory>();
 
     builder.Services.AddHttpClient<IAmazonHttpClient, AmazonHttpClient>()
         .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
@@ -56,15 +52,6 @@ try
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
     builder.Services.AddHealthChecks();
-    builder.Services.AddScoped<IProductRepository, ProductRepository>();
-    builder.Services.AddTransient<IAmazonDynamoDB>(_ =>
-    {
-        var clientConfig = new AmazonDynamoDBConfig
-        {
-            ServiceURL = builder.Configuration.GetValue<string>("Dynamodb-endpoint-url")
-        };
-        return new AmazonDynamoDBClient(clientConfig);
-    });
 
     var app = builder.Build();
 

@@ -1,6 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Application.Entities;
-using Application.Ports;
 using Application.Services;
 using Application.Models;
 using Microsoft.AspNetCore.Mvc;
