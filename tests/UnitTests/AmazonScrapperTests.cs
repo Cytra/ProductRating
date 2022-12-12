@@ -86,7 +86,7 @@ public class AmazonScrapperTests
             new object[]
             {
                 "B08S71Y7M7",
-                "$299.00$299.00",
+                "$299.00",
                 4.2f,
                 145,
                 "Windows 10 Laptop Computers, CHUWI GemiBook 13 inch Thin &amp; Light Laptop 8G RAM 256GB SSD with Celeron J4125 Processor, 2160x1440 2K IPS Display Notebook, PD Fast Charge, Backlit Keyboard, Full Metal",

@@ -202,9 +202,9 @@ public class AmazonScrapper : IAmazonScrapper
                 .Contains("a-price aok-align-center reinventPricePriceToPayMargin priceToPay"));
 
 
-        if (priceNode != null)
+        if (priceNode is { FirstChild: { } })
         {
-            price = priceNode.InnerText;
+            price = priceNode.FirstChild.InnerText;
         }
         else
         {
