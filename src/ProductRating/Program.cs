@@ -8,6 +8,7 @@ using Application.Models.Enums;
 using Microsoft.AspNetCore.Mvc;
 using ProductRating.Middleware;
 using ProductRating.Models;
+using Application.Facades;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -25,6 +26,11 @@ try
     builder.Services.Configure<AppOptions>(builder.Configuration);
 
     builder.Services.AddScoped<IAmazonScrapper, AmazonScrapper>();
+
+    builder.Services.AddScoped<IAmazonScrapperFacade, AmazonScrapperFacade>();
+
+    builder.Services.AddMemoryCache();
+    builder.Services.AddSingleton<ICacheService, CacheService>();
 
     builder.Services.AddHttpClient<IAmazonHttpClient, AmazonHttpClient>()
         .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler

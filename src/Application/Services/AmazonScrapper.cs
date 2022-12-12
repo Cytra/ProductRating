@@ -9,7 +9,9 @@ public interface IAmazonScrapper
 {
     Task<PagedList<ProductRating>> GetProductsBySearchTerm(string searchTerm, int? page);
 
-    Task<Dictionary<string, ProductByAsin>> GetProductByAsin(string asins);
+    Task<Dictionary<string, ProductByAsin>> GetProductsByAsin(string[] asins);
+
+    Task<ProductByAsin?> GetProductByAsin(string asins);
 }
 
 public class AmazonScrapper : IAmazonScrapper
@@ -150,17 +152,22 @@ public class AmazonScrapper : IAmazonScrapper
             sponsored);
     }
 
-    public async Task<Dictionary<string, ProductByAsin>> GetProductByAsin(string asins)
+    public async Task<Dictionary<string, ProductByAsin>> GetProductsByAsin(string[] asins)
     {
-        var asinArray = asins.Split(',');
         var result = new Dictionary<string, ProductByAsin>();
-        foreach (var asin in asinArray)
+        foreach (var asin in asins)
         {
-            var productHtml = await _amazonHttpClient.GetProductByAsin(asin);
-            var product = ParseProductByAsin(productHtml);
+            var product = await GetProductByAsin(asin);
             result.Add(asin, product);
         }
         return result;
+    }
+
+    public async  Task<ProductByAsin?> GetProductByAsin(string asin)
+    {
+        var productHtml = await _amazonHttpClient.GetProductByAsin(asin);
+        var product = ParseProductByAsin(productHtml);
+        return product;
     }
 
     private ProductByAsin ParseProductByAsin(string input)

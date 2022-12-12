@@ -42,7 +42,7 @@ public class AmazonScrapperTests
 
         var sut = _fixture.Create<AmazonScrapper>();
 
-        var products = await sut.GetProductByAsin(asin);
+        var products = await sut.GetProductsByAsin(new []{ asin });
 
         products.Should().NotBeNull();
         var product = products[asin];

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Application.Facades;
 using Application.Services;
 using Application.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -9,11 +10,11 @@ namespace ProductRating.Controllers;
 [Route("api/[controller]")]
 public class ProductController : ControllerBase
 {
-    private readonly IAmazonScrapper _amazonScrapper;
+    private readonly IAmazonScrapperFacade _amazonScrapperFacade;
 
-    public ProductController(IAmazonScrapper amazonScrapper)
+    public ProductController(IAmazonScrapperFacade amazonScrapperFacade)
     {
-        _amazonScrapper = amazonScrapper;
+        _amazonScrapperFacade = amazonScrapperFacade;
     }
 
     [HttpGet("{searchTerm}/search")]
@@ -21,7 +22,7 @@ public class ProductController : ControllerBase
         [Required] string searchTerm,
         [FromQuery] int? page)
     {
-        var result = await _amazonScrapper
+        var result = await _amazonScrapperFacade
             .GetProductsBySearchTerm(searchTerm, page);
         return result;
     }
@@ -30,7 +31,7 @@ public class ProductController : ControllerBase
     public async Task<Dictionary<string, ProductByAsin>> Asin(
         [Required] string asins)
     {
-        var result = await _amazonScrapper.GetProductByAsin(asins);
+        var result = await _amazonScrapperFacade.GetProductByAsin(asins);
         return result;
     }
 }
