@@ -8,7 +8,7 @@ public interface IAmazonScrapperFacade
 {
     Task<PagedList<ProductRating>> GetProductsBySearchTerm(string searchTerm, int? page);
 
-    Task<Dictionary<string, ProductByAsin>> GetProductByAsin(string asins);
+    Task<Dictionary<string, ProductByAsin>> GetProductByAsin(string[] asins);
 }
 public class AmazonScrapperFacade : IAmazonScrapperFacade
 {
@@ -28,12 +28,11 @@ public class AmazonScrapperFacade : IAmazonScrapperFacade
         return _amazonScrapper.GetProductsBySearchTerm(searchTerm, page);
     }
 
-    public async Task<Dictionary<string, ProductByAsin>> GetProductByAsin(string asins)
+    public async Task<Dictionary<string, ProductByAsin>> GetProductByAsin(string[] asins)
     {
-        var asinArray = asins.Split(',');
         var result = new ConcurrentDictionary<string, ProductByAsin>();
 
-        var tasks = asinArray.Select(async asin =>
+        var tasks = asins.Select(async asin =>
         {
             var product = _cacheService.GetProductByAsin(asin);
             if (product != null)

@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Text.Json;
+using Application.Models;
 using Application.Models.Enums;
-using ProductRating.Models;
 
 namespace ProductRating.Middleware
 {
@@ -40,7 +40,7 @@ namespace ProductRating.Middleware
             var result = new ErrorResponse();
             result.Errors.Add(new Error
             {
-                ErrorCode = (int)ErrorCodes.InternalError,
+                ErrorCode = ErrorCodes.InternalError,
                 ErrorMessage = "Internal Server Error"
             });
             return result;

@@ -7,8 +7,11 @@ using System.Net;
 using Application.Models.Enums;
 using Microsoft.AspNetCore.Mvc;
 using ProductRating.Middleware;
-using ProductRating.Models;
 using Application.Facades;
+using MediatR;
+using System.Reflection;
+using Application.Commands;
+using Application.Models;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -22,6 +25,9 @@ try
     builder.Host.UseSerilog();
 
     // Add services to the container.
+
+    builder.Services.AddMediatR(Assembly.GetExecutingAssembly());
+    builder.Services.AddMediatR(typeof(ProductsBySearchTerm.Command).Assembly);
 
     builder.Services.Configure<AppOptions>(builder.Configuration);
 
@@ -48,7 +54,7 @@ try
                 {
                     foreach (var error in modelState.Value.Errors)
                     {
-                        apiResponse.Errors.Add(new Error() { ErrorCode = (int)ErrorCodes.BadRequest, ErrorMessage = error.ErrorMessage });
+                        apiResponse.Errors.Add(new Error() { ErrorCode = ErrorCodes.BadRequest, ErrorMessage = error.ErrorMessage });
                     }
                 }
                 return new BadRequestObjectResult(apiResponse);

@@ -1,4 +1,6 @@
-﻿namespace ProductRating.Models;
+﻿using Application.Models.Enums;
+
+namespace Application.Models;
 
 public class ErrorResponse
 {
@@ -7,6 +9,6 @@ public class ErrorResponse
 
 public class Error
 {
-    public int ErrorCode { get; set; }
+    public ErrorCodes ErrorCode { get; set; }
     public string ErrorMessage { get; set; }
 }
