@@ -1,5 +1,6 @@
 ﻿using Application.Models;
 using Application.Services;
+using System.Collections.Concurrent;
 
 namespace Application.Facades;
 
@@ -30,41 +31,29 @@ public class AmazonScrapperFacade : IAmazonScrapperFacade
     public async Task<Dictionary<string, ProductByAsin>> GetProductByAsin(string asins)
     {
         var asinArray = asins.Split(',');
-        var result = new Dictionary<string, ProductByAsin>();
-        //Parallel.ForEach(asinArray, async asin =>
-        //{
-        //    var product = _cacheService.GetProductByAsin(asin);
-        //    if (product != null)
-        //    {
-        //        result.Add(asin, product);
-        //    }
-        //    else
-        //    {
-        //        product = await _amazonScrapper.GetProductByAsin(asin);
-        //        if (product != null)
-        //        {
-        //            _cacheService.AddProductByAsin(asin, product);
-        //            result.Add(asin, product);
-        //        }
-        //    }
-        //});
+        var result = new ConcurrentDictionary<string, ProductByAsin>();
 
-        foreach (var asin in asinArray)
+        var tasks = asinArray.Select(async asin =>
         {
             var product = _cacheService.GetProductByAsin(asin);
             if (product != null)
             {
-                result.Add(asin, product);
-                continue;
+                result.TryAdd(asin, product);
             }
-
-            product = await _amazonScrapper.GetProductByAsin(asin);
-            if (product != null)
+            else
             {
-                _cacheService.AddProductByAsin(asin, product);
-                result.Add(asin, product);
+                product = await _amazonScrapper.GetProductByAsin(asin);
+                if (product != null)
+                {
+                    _cacheService.AddProductByAsin(asin, product);
+                    result.TryAdd(asin, product);
+                }
             }
-        }
-        return result;
+        });
+        await Task.WhenAll(tasks);
+
+
+        return result.ToDictionary(kvp => kvp.Key,
+            kvp => kvp.Value);
     }
 }
