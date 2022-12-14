@@ -1,4 +1,5 @@
 ﻿using Application.Ports;
+using System.Text;
 using System.Web;
 
 namespace Infrastructure.Scrapers;
@@ -29,7 +30,8 @@ public class AmazonHttpClient : IAmazonHttpClient
     {
         var response = await _httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadAsStringAsync();
+        var resultBytes = await response.Content.ReadAsByteArrayAsync();
+        var result  = Encoding.UTF8.GetString(resultBytes);
         return result;
     }
 }

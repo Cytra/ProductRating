@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Application.Commands;
 using Application.Models;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc; 
 
 namespace ProductRating.Controllers;
 

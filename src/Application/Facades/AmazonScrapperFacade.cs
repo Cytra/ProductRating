@@ -12,14 +12,14 @@ public interface IAmazonScrapperFacade
 }
 public class AmazonScrapperFacade : IAmazonScrapperFacade
 {
-    private readonly ICacheService _cacheService;
+    private readonly ICacheService _getProductByAsinCache;
     private readonly IAmazonScrapper _amazonScrapper;
 
     public AmazonScrapperFacade(
-        ICacheService cacheService, 
+        ICacheService getProductByAsinCache, 
         IAmazonScrapper amazonScrapper)
     {
-        _cacheService = cacheService;
+        _getProductByAsinCache = getProductByAsinCache;
         _amazonScrapper = amazonScrapper;
     }
 
@@ -34,7 +34,7 @@ public class AmazonScrapperFacade : IAmazonScrapperFacade
 
         var tasks = asins.Select(async asin =>
         {
-            var product = _cacheService.GetProductByAsin(asin);
+            var product = _getProductByAsinCache.GetProductByAsin(asin);
             if (product != null)
             {
                 result.TryAdd(asin, product);
@@ -44,13 +44,12 @@ public class AmazonScrapperFacade : IAmazonScrapperFacade
                 product = await _amazonScrapper.GetProductByAsin(asin);
                 if (product != null)
                 {
-                    _cacheService.AddProductByAsin(asin, product);
+                    _getProductByAsinCache.AddProductByAsin(asin, product);
                     result.TryAdd(asin, product);
                 }
             }
         });
         await Task.WhenAll(tasks);
-
 
         return result.ToDictionary(kvp => kvp.Key,
             kvp => kvp.Value);
