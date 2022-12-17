@@ -7,12 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace ProductRating.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-public class ProductController : ControllerBase
+[Route("api/product/amazon")]
+public class AmazonProductController : ControllerBase
 {
     private readonly IMediator _mediator;
 
-    public ProductController(IMediator mediator)
+    public AmazonProductController(IMediator mediator)
     {
         _mediator = mediator;
     }

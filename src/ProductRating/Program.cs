@@ -71,6 +71,7 @@ try
 
     var app = builder.Build();
 
+    app.UseHttpLogging();
     var env = app.Environment;
     if (env.IsDevelopment())
     {
