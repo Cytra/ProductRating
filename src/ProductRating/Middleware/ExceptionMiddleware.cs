@@ -24,7 +24,7 @@ namespace ProductRating.Middleware
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error - {ex.Message}");
+                _logger.LogError(ex, $"Error - {ex.Message}, Stack Trace - {ex.StackTrace}");
                 await HandleExceptionAsync(httpContext, ex);
             }
         }

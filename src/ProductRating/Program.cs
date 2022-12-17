@@ -12,9 +12,13 @@ using MediatR;
 using System.Reflection;
 using Application.Commands;
 using Application.Models;
+using Elastic.CommonSchema.Serilog;
 
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
+    .WriteTo
+    .Console()
+    .WriteTo
+    .File(new EcsTextFormatter(), "/path/to/log.txt")
     .CreateLogger();
 
 try

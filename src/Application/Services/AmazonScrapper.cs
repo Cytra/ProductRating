@@ -46,6 +46,11 @@ public class AmazonScrapper : IAmazonScrapper
                 => y.Name == "data-component-type" && y.Value == "s-search-result"))
             .ToList();
 
+        if (searchResult == null || searchResult.Count == 0)
+        {
+            return new PagedList<ProductRating>();
+        }
+
         foreach (var node in searchResult)
         {
             result.Add(ParseProduct(node));
