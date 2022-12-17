@@ -17,7 +17,14 @@ public class AmazonProductController : ControllerBase
         _mediator = mediator;
     }
 
-    [HttpGet("{searchTerm}/search")]
+    /// <summary>
+    /// Returns Amazon product list by search term
+    /// </summary>
+    /// <param name="searchTerm">Search term</param>
+    /// <param name="page">Page, default input -> 1</param>
+    /// <param name="cancellationToken">Cancellation Token</param>
+    /// <returns></returns>
+    [HttpGet("search/{searchTerm}")]
     public async Task<PagedList<Application.Models.ProductRating>> Search(
         [Required] string searchTerm,
         [FromQuery] int? page,
@@ -29,6 +36,12 @@ public class AmazonProductController : ControllerBase
         return result;
     }
 
+    /// <summary>
+    /// Provides Amazon product Rating, Price ant other information by ASIN
+    /// </summary>
+    /// <param name="asins">List of ASINs to search for</param>
+    /// <param name="cancellationToken">Cancellation Token</param>
+    /// <returns></returns>
     [HttpGet("{asins}")]
     public async Task<Dictionary<string, ProductByAsin>> Asin(
         [Required] string asins, CancellationToken cancellationToken)
