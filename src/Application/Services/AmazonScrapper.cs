@@ -142,7 +142,7 @@ public class AmazonScrapper : IAmazonScrapper
 
         var sponsoredSpan = oneProd
             .Descendants("span")
-            .SingleOrDefault(y => y.Attributes
+            .FirstOrDefault(y => y.Attributes
                 .Any(c => c.Name == "class"
                           && c.Value == "a-color-secondary"));
 
@@ -210,7 +210,7 @@ public class AmazonScrapper : IAmazonScrapper
         var priceNode = htmlDoc
             .DocumentNode
             .Descendants("span")
-            .SingleOrDefault(node => node.GetAttributeValue("class", "")
+            .FirstOrDefault(node => node.GetAttributeValue("class", "")
                 .Contains("a-price aok-align-center reinventPricePriceToPayMargin priceToPay"));
 
 
@@ -236,7 +236,7 @@ public class AmazonScrapper : IAmazonScrapper
         var ratingNode = htmlDoc
             .DocumentNode
             .Descendants("span")
-            .SingleOrDefault(node => node.GetAttributeValue("class", "")
+            .FirstOrDefault(node => node.GetAttributeValue("class", "")
                 .Contains("a-size-medium a-color-base"));
 
         if (ratingNode != null)
